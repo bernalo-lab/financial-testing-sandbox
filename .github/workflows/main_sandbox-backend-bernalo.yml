@@ -17,10 +17,11 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install and Build Frontend
+      - name: Install and Test Frontend
         run: |
           cd frontend
           npm install
+          npm test -- --watchAll=false
           npm run build
 
       - name: Deploy Frontend App
@@ -37,6 +38,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install and Test Backend
+        run: |
+          cd backend
+          npm install
+          npm test -- --watchAll=false
 
       - name: Deploy Backend App
         uses: azure/webapps-deploy@v2
