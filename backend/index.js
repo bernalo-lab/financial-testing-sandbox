@@ -1,1 +1,1 @@
-"console.log('Hello from backend');" 
+console.log("Backend service running");
