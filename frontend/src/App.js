@@ -1,7 +1,16 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
+  const [health, setHealth] = useState(null);
+
+  useEffect(() => {
+    fetch("https://sandbox-backend-bernalo.azurewebsites.net/health")
+      .then((res) => res.json())
+      .then((data) => setHealth(data))
+      .catch((err) => console.error("Backend not reachable:", err));
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
@@ -33,6 +42,15 @@ function App() {
           <li>Dev teams validating core banking APIs</li>
           <li>CTOs reviewing CI/CD and QA effectiveness</li>
         </ul>
+      </section>
+
+      <section className="App-section">
+        <h2>Backend Health Check</h2>
+        {health ? (
+          <pre>{JSON.stringify(health, null, 2)}</pre>
+        ) : (
+          <p>Checking backend status...</p>
+        )}
       </section>
 
       <footer className="App-footer">
