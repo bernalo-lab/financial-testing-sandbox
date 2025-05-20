@@ -1,31 +1,48 @@
 const express = require("express");
+const cors = require("cors");
+
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// ✅ Add CORS headers for frontend access
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
+app.use(cors());
+app.use(express.json()); // Parse JSON body
 
-app.get("/", (req, res) => {
-  console.log("Root route hit");
-  res.send("Welcome to the Sandbox Backend!");
-});
-
+// Health route
 app.get("/health", (req, res) => {
-  console.log("Health route hit");
-  res.json({ status: "ok", timestamp: new Date() });
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Fallback for undefined routes
+// 🔹 New Routes
+app.get("/api/status", (req, res) => {
+  res.json({ service: "sandbox-backend", uptime: process.uptime() });
+});
+
+const users = [
+  { id: 1, name: "Ada Lovelace", role: "Admin" },
+  { id: 2, name: "Grace Hopper", role: "Tester" },
+  { id: 3, name: "Alan Turing", role: "Dev" }
+];
+
+app.get("/api/users", (req, res) => {
+  res.json(users);
+});
+
+app.get("/api/users/:id", (req, res) => {
+  const user = users.find(u => u.id === parseInt(req.params.id));
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json(user);
+});
+
+app.post("/api/echo", (req, res) => {
+  res.json({ received: req.body });
+});
+
+// Fallback for 404
 app.use((req, res) => {
-  console.log(`Unhandled route: ${req.url}`);
-  res.status(404).send("404 Not Found");
+  res.status(404).json({ error: "Route not found" });
 });
 
-app.listen(port, () => {
-  console.log(`✅ Backend running on port ${port}`);
+// Start server
+app.listen(PORT, () => {
+  console.log(`✅ Sandbox backend running on port ${PORT}`);
 });
