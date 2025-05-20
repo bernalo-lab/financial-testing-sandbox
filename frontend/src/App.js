@@ -3,12 +3,24 @@ import "./App.css";
 
 function App() {
   const [health, setHealth] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     fetch("https://sandbox-backend-bernalo.azurewebsites.net/health")
       .then((res) => res.json())
       .then((data) => setHealth(data))
       .catch((err) => console.error("Backend not reachable:", err));
+
+    fetch("https://sandbox-backend-bernalo.azurewebsites.net/api/status")
+      .then((res) => res.json())
+      .then((data) => setStatus(data))
+      .catch((err) => console.error("Status API failed:", err));
+
+    fetch("https://sandbox-backend-bernalo.azurewebsites.net/api/users")
+      .then((res) => res.json())
+      .then((data) => setUsers(data))
+      .catch((err) => console.error("Users API failed:", err));
   }, []);
 
   return (
@@ -50,6 +62,30 @@ function App() {
           <pre>{JSON.stringify(health, null, 2)}</pre>
         ) : (
           <p>Checking backend status...</p>
+        )}
+      </section>
+
+      <section className="App-section">
+        <h2>Backend Status</h2>
+        {status ? (
+          <pre>{JSON.stringify(status, null, 2)}</pre>
+        ) : (
+          <p>Fetching service status...</p>
+        )}
+      </section>
+
+      <section className="App-section">
+        <h2>Users List</h2>
+        {users.length > 0 ? (
+          <ul>
+            {users.map((user) => (
+              <li key={user.id}>
+                {user.name} - {user.role}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Loading users...</p>
         )}
       </section>
 
