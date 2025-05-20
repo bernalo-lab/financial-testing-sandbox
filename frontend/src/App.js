@@ -5,6 +5,8 @@ function App() {
   const [health, setHealth] = useState(null);
   const [status, setStatus] = useState(null);
   const [users, setUsers] = useState([]);
+  const [echoInput, setEchoInput] = useState('');
+  const [echoResponse, setEchoResponse] = useState(null);
 
   useEffect(() => {
     fetch("https://sandbox-backend-bernalo.azurewebsites.net/health")
@@ -22,6 +24,23 @@ function App() {
       .then((data) => setUsers(data))
       .catch((err) => console.error("Users API failed:", err));
   }, []);
+
+  const handleEchoSubmit = (e) => {
+    e.preventDefault();
+    try {
+      const body = JSON.parse(echoInput);
+      fetch("https://sandbox-backend-bernalo.azurewebsites.net/api/echo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then(res => res.json())
+        .then(data => setEchoResponse(data))
+        .catch(err => setEchoResponse({ error: "Request failed" }));
+    } catch {
+      setEchoResponse({ error: "Invalid JSON format" });
+    }
+  };
 
   return (
     <div className="App">
@@ -86,6 +105,27 @@ function App() {
           </ul>
         ) : (
           <p>Loading users...</p>
+        )}
+      </section>
+
+      <section className="App-section">
+        <h2>Echo API Test</h2>
+        <form onSubmit={handleEchoSubmit}>
+          <textarea
+            value={echoInput}
+            onChange={(e) => setEchoInput(e.target.value)}
+            rows="5"
+            cols="50"
+            placeholder='Type valid JSON here, e.g. { "message": "Hello" }'
+          />
+          <br />
+          <button type="submit">Send to Backend</button>
+        </form>
+        {echoResponse && (
+          <div>
+            <h4>Response:</h4>
+            <pre>{JSON.stringify(echoResponse, null, 2)}</pre>
+          </div>
         )}
       </section>
 
