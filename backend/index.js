@@ -41,3 +41,7 @@ app.get('/api/users', (req, res) => {
 app.listen(port, () => {
   console.log(`Sandbox backend listening on port ${port}`);
 });
+
+app.get('/', (req, res) => {
+  res.send('✅ Backend is running. Use /api/status or /api/users');
+});
