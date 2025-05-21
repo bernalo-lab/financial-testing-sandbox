@@ -20,8 +20,7 @@ app.get('/health', (req, res) => {
 
 // Echo route
 app.post('/api/echo', (req, res) => {
-  const { message } = req.body;
-  res.json({ echoed: message });
+  res.json({ echoed: req.body });
 });
 
 // Status route
