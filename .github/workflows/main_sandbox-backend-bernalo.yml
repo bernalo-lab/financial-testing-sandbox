@@ -42,7 +42,7 @@ jobs:
       uses: azure/appservice-settings@v1
       with:
         app-name: 'sandbox-backend-bernalo'
-        settings-json: |
+        app-settings-json: |
           {
             "API_KEY": "${{ secrets.API_KEY }}"
           }
