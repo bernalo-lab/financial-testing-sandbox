@@ -1,178 +1,96 @@
+
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
-const auth = require('basic-auth');
+const swaggerUi = require('swagger-ui-express');
+const basicAuth = require('express-basic-auth');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors({
-  origin: 'https://sandbox-frontend-bernalo.azurewebsites.net',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+app.use(express.json());
+
+// Basic Auth Middleware for Swagger
+const swaggerUser = process.env.SWAGGER_USER || 'admin';
+const swaggerPass = process.env.SWAGGER_PASS || 'sandbox123';
+
+app.use(['/api-docs', '/api-docs/*'], basicAuth({
+  users: { [swaggerUser]: swaggerPass },
+  challenge: true,
+  unauthorizedResponse: (req) => req.auth
+    ? 'Credentials rejected'
+    : 'No credentials provided'
 }));
-app.use(bodyParser.json());
-
-// Swagger Auth Middleware
-const swaggerAuth = (req, res, next) => {
-  const user = auth(req);
-  const username = process.env.SWAGGER_USER || 'admin';
-  const password = process.env.SWAGGER_PASS || 'sandbox123';
-
-  if (!user || user.name !== username || user.pass !== password) {
-    res.set('WWW-Authenticate', 'Basic realm="Swagger Docs"');
-    return res.status(401).send('Authentication required.');
-  }
-  next();
-};
 
 // Swagger setup
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Financial Testing Sandbox API',
-      version: '1.0.0',
-      description: 'An enterprise-grade backend testing interface for financial and QA engineering teams.',
-      termsOfService: 'https://bernalo.com/terms',
-      contact: {
-        name: 'Bernalo Lab',
-        url: 'https://bernalo.com',
-        email: 'support@bernalo.com'
-      },
-      license: {
-        name: 'MIT License',
-        url: 'https://opensource.org/licenses/MIT'
-      }
-    },
-    components: {
-      securitySchemes: {
-        ApiKeyAuth: {
-          type: 'apiKey',
-          in: 'header',
-          name: 'x-api-key',
-          description: 'API key must be provided in the request header'
-        }
-      }
-    },
-    security: [{
-      ApiKeyAuth: []
-    }]
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Financial Testing Sandbox API',
+    version: '1.0.0',
+    description: 'Interactive API documentation for the Financial Testing Sandbox.',
   },
-  apis: ['./index.js']
+  servers: [
+    {
+      url: 'https://sandbox-backend-bernalo.azurewebsites.net',
+    },
+  ],
 };
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const options = {
+  swaggerDefinition,
+  apis: ['./index.js'],
+};
 
+const swaggerSpec = swaggerJsdoc(options);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Routes
 /**
- * @openapi
- * /health:
+ * @swagger
+ * /users:
  *   get:
- *     summary: Health check endpoint
- *     tags:
- *       - Health
+ *     summary: Get list of test users
+ *     tags: [Users]
  *     responses:
  *       200:
- *         description: Server is alive
+ *         description: List of users
  */
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-/**
- * @openapi
- * /api/status:
- *   get:
- *     summary: Backend service status
- *     tags:
- *       - System
- *     responses:
- *       200:
- *         description: Returns backend status message
- */
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'Backend is running smoothly!' });
-});
-
-/**
- * @openapi
- * /api/users:
- *   get:
- *     summary: Get a list of mock users
- *     tags:
- *       - Users
- *     responses:
- *       200:
- *         description: A list of users
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                     example: 1
- *                   name:
- *                     type: string
- *                     example: Ada Lovelace
- *                   role:
- *                     type: string
- *                     example: QA Engineer
- */
-app.get('/api/users', (req, res) => {
+app.get('/users', (req, res) => {
   res.json([
-    { id: 1, name: 'Ada Lovelace', role: 'QA Engineer' },
-    { id: 2, name: 'Grace Hopper', role: 'DevOps Engineer' },
-    { id: 3, name: 'Alan Turing', role: 'Developer' }
+    { name: 'Alice Tester', role: 'QA Engineer' },
+    { name: 'Bob Developer', role: 'Software Engineer' },
+    { name: 'Eve Analyst', role: 'Business Analyst' },
   ]);
 });
 
 /**
- * @openapi
- * /api/echo:
+ * @swagger
+ * /echo:
  *   post:
- *     summary: Echoes back the input JSON
- *     tags:
- *       - Utilities
- *     security:
- *       - ApiKeyAuth: []
+ *     summary: Echo back the posted JSON
+ *     tags: [Echo]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             properties:
- *               message:
- *                 type: string
- *                 example: Hello, world!
+ *             example: { "API_KEY": "12345" }
  *     responses:
  *       200:
- *         description: Echoed back input
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 echoed:
- *                   type: string
- *                   example: Hello, world!
+ *         description: Echoed response
  */
-app.post('/api/echo', (req, res) => {
-  const { message } = req.body;
-  res.json({ echoed: message });
+app.post('/echo', (req, res) => {
+  res.json({ received: req.body });
 });
 
+// Catch root requests
 app.get('/', (req, res) => {
-  res.send('✅ Sandbox backend is running. Visit /api-docs for Swagger UI.');
+  res.send('Financial Testing Sandbox Backend API');
 });
 
+// Start server
 app.listen(port, () => {
-  console.log(`Sandbox backend listening on port ${port}`);
+  console.log(`Server listening at http://localhost:${port}`);
 });
