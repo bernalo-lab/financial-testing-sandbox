@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const auth = require('basic-auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,7 +16,20 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 
-// Swagger setup with enhanced metadata
+// Swagger Auth Middleware
+const swaggerAuth = (req, res, next) => {
+  const user = auth(req);
+  const username = process.env.SWAGGER_USER || 'admin';
+  const password = process.env.SWAGGER_PASS || 'sandbox123';
+
+  if (!user || user.name !== username || user.pass !== password) {
+    res.set('WWW-Authenticate', 'Basic realm="Swagger Docs"');
+    return res.status(401).send('Authentication required.');
+  }
+  next();
+};
+
+// Swagger setup
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
@@ -52,7 +66,7 @@ const swaggerOptions = {
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
  * @openapi
