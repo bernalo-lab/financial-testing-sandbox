@@ -38,7 +38,7 @@ app.use('/swagger.json', swaggerAuth, (req, res) => {
   res.send(swaggerSpec);
 });
 
-app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
  * @swagger
