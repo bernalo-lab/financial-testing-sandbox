@@ -1,104 +1,62 @@
-
 const express = require('express');
-const swaggerJsdoc = require('swagger-jsdoc');
+const cors = require('cors');
+const bodyParser = require('body-parser');
 const swaggerUi = require('swagger-ui-express');
-const basicAuth = require('express-basic-auth');
+const swaggerJsdoc = require('swagger-jsdoc');
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+app.use(cors());
+app.use(bodyParser.json());
 
+const PORT = process.env.PORT || 3000;
+
+// Simple /users endpoint
+app.get('/api/users', (req, res) => {
+  res.json([
+    { name: 'Alice Tester', role: 'QA Engineer' },
+    { name: 'Bob Developer', role: 'Software Engineer' },
+    { name: 'Eve Analyst', role: 'Business Analyst' }
+  ]);
+});
+
+// Echo endpoint
+app.post('/api/echo', (req, res) => {
+  res.json({ echoed: req.body });
+});
+
+// Swagger setup
 const swaggerOptions = {
-  definition: {
+  swaggerDefinition: {
     openapi: '3.0.0',
     info: {
       title: 'Financial Testing Sandbox API',
       version: '1.0.0',
-      description: 'Interactive documentation for sandbox backend API',
-    },
-    servers: [
-      {
-        url: 'https://sandbox-backend-bernalo.azurewebsites.net',
-      },
-    ],
+      description: 'Interactive documentation for testing sandbox endpoints.'
+    }
   },
   apis: ['./index.js'],
 };
-
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// Basic Auth for Swagger
-const swaggerAuth = basicAuth({
-  users: { 'admin': 'password123' },
-  challenge: true,
-});
+// Debugging environment variables for Swagger protection
+app.use('/api-docs', (req, res, next) => {
+  console.log('Swagger Auth Debug:');
+  console.log('DOCS_USER:', process.env.DOCS_USER);
+  console.log('DOCS_PASS:', process.env.DOCS_PASS);
+  const auth = { login: process.env.DOCS_USER, password: process.env.DOCS_PASS };
 
-// Routes
-app.use('/swagger.json', swaggerAuth, (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+  const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  if (login && password && login === auth.login && password === auth.password) {
+    return next();
+  }
 
-/**
- * @swagger
- * /users:
- *   get:
- *     summary: Returns a list of users
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: A list of user objects
- */
-app.get('/users', (req, res) => {
-  res.json([
-    { name: 'Alice Tester', role: 'QA Engineer' },
-    { name: 'Bob Developer', role: 'Software Engineer' },
-    { name: 'Eve Analyst', role: 'Business Analyst' },
-  ]);
-});
+  res.set('WWW-Authenticate', 'Basic realm="API Docs"');
+  res.status(401).send('Authentication required.');
+}, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-/**
- * @swagger
- * /echo:
- *   post:
- *     summary: Echoes back posted JSON
- *     tags: [Test]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Echoed response
- */
-app.post('/echo', (req, res) => {
-  res.json(req.body);
-});
-
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     tags: [Status]
- *     responses:
- *       200:
- *         description: Application status
- */
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke!');
-});
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
