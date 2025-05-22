@@ -94,7 +94,7 @@ app.get("/", (req, res) => {
  *         description: Application is healthy.
  */
 app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+  res.json({ status: 'OK' });
 });
 
 app.listen(PORT, () => {
