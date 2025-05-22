@@ -1,78 +1,68 @@
-const express = require("express");
-const swaggerJsDoc = require("swagger-jsdoc");
-const swaggerUi = require("swagger-ui-express");
-const basicAuth = require("express-basic-auth");
+
+const express = require('express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const basicAuth = require('express-basic-auth');
 
 const app = express();
 app.use(express.json());
 
-// Swagger definition
 const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: "3.0.0",
+  definition: {
+    openapi: '3.0.0',
     info: {
-      title: "Financial Testing Sandbox API",
-      description: "Interactive documentation for the sandbox testing API",
-      version: "1.0.0",
+      title: 'Financial Testing Sandbox API',
+      version: '1.0.0',
+      description: 'API documentation for the Financial Testing Sandbox',
     },
+    servers: [
+      {
+        url: 'https://sandbox-backend-bernalo.azurewebsites.net',
+      },
+    ],
   },
-  apis: ["./index.js"], // Adjust if needed
+  apis: ['./index.js'], // adjust if your file is named differently
 };
 
-const swaggerSpec = swaggerJsDoc(swaggerOptions);
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// ✅ Protect only the raw Swagger JSON spec
-app.use(
-  "/swagger.json",
-  basicAuth({
-    users: { admin: "password123" },
-    challenge: true,
-  }),
-  (req, res) => {
-    res.setHeader("Content-Type", "application/json");
-    res.send(swaggerSpec);
-  }
-);
+// Middleware: Swagger JSON protected with basic auth
+const swaggerAuth = basicAuth({
+  users: { 'admin': 'password123' },
+  challenge: true,
+});
 
-// ✅ Public Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/swagger.json', swaggerAuth, (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
-/**
- * @swagger
- * /users:
- *   get:
- *     summary: Get all users
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: List of users
- */
-app.get("/users", (req, res) => {
+// Middleware: Protect Swagger UI route
+app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.get('/users', (req, res) => {
   res.json([
-    { name: "Alice Tester", role: "QA Engineer" },
-    { name: "Bob Developer", role: "Software Engineer" },
+    { name: 'Alice Tester', role: 'QA Engineer' },
+    { name: 'Bob Developer', role: 'Software Engineer' },
+    { name: 'Eve Analyst', role: 'Business Analyst' },
   ]);
 });
 
-/**
- * @swagger
- * /echo:
- *   post:
- *     summary: Echoes back the request body
- *     tags: [Echo]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Echoed response
- */
-app.post("/echo", (req, res) => {
+app.post('/echo', (req, res) => {
   res.json(req.body);
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Catch-all error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
+});
+
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
+});
