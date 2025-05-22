@@ -1,128 +1,154 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors({
   origin: 'https://sandbox-frontend-bernalo.azurewebsites.net',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
 }));
-
 app.use(bodyParser.json());
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     EchoRequest:
- *       type: object
- *       properties:
- *         message:
- *           type: string
- *     EchoResponse:
- *       type: object
- *       properties:
- *         echoed:
- *           type: string
- */
+// Swagger setup
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Financial Testing Sandbox API',
+      version: '1.0.0',
+      description: 'API documentation for the backend services of the Financial Testing Sandbox.'
+    },
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: 'apiKey',
+          in: 'header',
+          name: 'x-api-key',
+          description: 'API key must be provided in the request header'
+        }
+      }
+    },
+    security: [{
+      ApiKeyAuth: []
+    }]
+  },
+  apis: ['./index.js']
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
- * @swagger
- * /api/echo:
- *   post:
- *     summary: Echoes back the message sent in the request.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/EchoRequest'
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags:
+ *       - Health
  *     responses:
  *       200:
- *         description: Successful echo
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/EchoResponse'
+ *         description: Server is alive
  */
-app.post('/api/echo', (req, res) => {
-  const { message } = req.body;
-  res.json({ echoed: message });
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 /**
- * @swagger
+ * @openapi
  * /api/status:
  *   get:
- *     summary: Check backend status
+ *     summary: Backend service status
+ *     tags:
+ *       - System
  *     responses:
  *       200:
- *         description: Backend status
+ *         description: Returns backend status message
  */
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is running smoothly!' });
 });
 
 /**
- * @swagger
+ * @openapi
  * /api/users:
  *   get:
- *     summary: List sample users
+ *     summary: Get a list of mock users
+ *     tags:
+ *       - Users
  *     responses:
  *       200:
- *         description: An array of user objects
+ *         description: A list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                     example: 1
+ *                   name:
+ *                     type: string
+ *                     example: Ada Lovelace
+ *                   role:
+ *                     type: string
+ *                     example: QA Engineer
  */
 app.get('/api/users', (req, res) => {
   res.json([
-    { id: 1, name: 'Alice Tester', role: 'QA Engineer' },
-    { id: 2, name: 'Bob Developer', role: 'Software Engineer' },
-    { id: 3, name: 'Eve Analyst', role: 'Business Analyst' }
+    { id: 1, name: 'Ada Lovelace', role: 'QA Engineer' },
+    { id: 2, name: 'Grace Hopper', role: 'DevOps Engineer' },
+    { id: 3, name: 'Alan Turing', role: 'Developer' }
   ]);
 });
 
 /**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check
+ * @openapi
+ * /api/echo:
+ *   post:
+ *     summary: Echoes back the input JSON
+ *     tags:
+ *       - Utilities
+ *     security:
+ *       - ApiKeyAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *                 example: Hello, world!
  *     responses:
  *       200:
- *         description: Health info
+ *         description: Echoed back input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 echoed:
+ *                   type: string
+ *                   example: Hello, world!
  */
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.post('/api/echo', (req, res) => {
+  const { message } = req.body;
+  res.json({ echoed: message });
 });
-
-// Swagger setup
-const swaggerSpec = swaggerJsdoc({
-  definition: {
-    openapi: '3.1.0',
-    info: {
-      title: 'Financial Sandbox API',
-      version: '1.0.0',
-      description: 'Interactive API documentation for the sandbox backend.'
-    },
-    servers: [
-      {
-        url: 'https://sandbox-backend-bernalo.azurewebsites.net',
-        description: 'Production'
-      }
-    ]
-  },
-  apis: ['./index.js']
-});
-
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/', (req, res) => {
-  res.send('✅ Backend is running. Use /api/status, /api/users or /api-docs');
+  res.send('✅ Sandbox backend is running. Visit /api-docs for Swagger UI.');
 });
 
 app.listen(port, () => {
-  console.log(`📚 API docs live at http://localhost:${port}/api-docs`);
+  console.log(`Sandbox backend listening on port ${port}`);
 });
