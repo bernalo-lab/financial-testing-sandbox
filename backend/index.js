@@ -61,6 +61,16 @@ app.use('/api-docs', (req, res, next) => {
   res.status(401).send('Authentication required.');
 }, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send('Welcome to the Financial Testing Sandbox Backend');
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
