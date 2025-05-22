@@ -15,14 +15,24 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 
-// Swagger setup
+// Swagger setup with enhanced metadata
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
     info: {
       title: 'Financial Testing Sandbox API',
       version: '1.0.0',
-      description: 'API documentation for the backend services of the Financial Testing Sandbox.'
+      description: 'An enterprise-grade backend testing interface for financial and QA engineering teams.',
+      termsOfService: 'https://bernalo.com/terms',
+      contact: {
+        name: 'Bernalo Lab',
+        url: 'https://bernalo.com',
+        email: 'support@bernalo.com'
+      },
+      license: {
+        name: 'MIT License',
+        url: 'https://opensource.org/licenses/MIT'
+      }
     },
     components: {
       securitySchemes: {
