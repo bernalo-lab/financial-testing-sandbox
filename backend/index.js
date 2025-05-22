@@ -13,7 +13,7 @@ const swaggerOptions = {
     info: {
       title: 'Financial Testing Sandbox API',
       version: '1.0.0',
-      description: 'API documentation for the Financial Testing Sandbox',
+      description: 'Interactive documentation for sandbox backend API',
     },
     servers: [
       {
@@ -21,25 +21,35 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./index.js'], // adjust if your file is named differently
+  apis: ['./index.js'],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
-// Middleware: Swagger JSON protected with basic auth
+// Basic Auth for Swagger
 const swaggerAuth = basicAuth({
   users: { 'admin': 'password123' },
   challenge: true,
 });
 
+// Routes
 app.use('/swagger.json', swaggerAuth, (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
 });
 
-// Middleware: Protect Swagger UI route
 app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Returns a list of users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: A list of user objects
+ */
 app.get('/users', (req, res) => {
   res.json([
     { name: 'Alice Tester', role: 'QA Engineer' },
@@ -48,15 +58,41 @@ app.get('/users', (req, res) => {
   ]);
 });
 
+/**
+ * @swagger
+ * /echo:
+ *   post:
+ *     summary: Echoes back posted JSON
+ *     tags: [Test]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Echoed response
+ */
 app.post('/echo', (req, res) => {
   res.json(req.body);
 });
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [Status]
+ *     responses:
+ *       200:
+ *         description: Application status
+ */
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Catch-all error handler
+// Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).send('Something broke!');
