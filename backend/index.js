@@ -45,7 +45,10 @@ const swaggerOptions = {
   apis: ['./index.js']
 };
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+const swaggerSpec = swaggerJsdoc({
+  definition: swaggerDefinition,
+  apis: ['./index.js'], // ← Make sure this is correct
+});
 
 // Basic Auth for Swagger UI
 const swaggerUser = process.env.DOCS_USER || 'admin';
