@@ -7,16 +7,20 @@ function App() {
   const backendUrl = 'https://sandbox-backend-bernalo.azurewebsites.net';
 
   useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const res = await fetch(`${backendUrl}/health`);
-        const data = await res.json();
-        setHealth(`Status: ${data.status}`);
-      } catch (error) {
-        console.error('Health check failed:', error);
-        setHealth('Backend not reachable');
-      }
-    };
+  const checkHealth = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/health`);
+      const data = await res.json(); // expects JSON: { status: 'OK' }
+      setHealth(`Status: ${data.status}`);
+    } catch (error) {
+      console.error('Backend not reachable:', error);
+      setHealth('Backend not reachable');
+    }
+  };
+
+  checkHealth();
+  }, []);
+
 
     const fetchUsers = async () => {
       try {

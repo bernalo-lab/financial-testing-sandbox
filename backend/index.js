@@ -88,7 +88,7 @@ app.get('/api/users', (req, res) => {
  *         description: OK
  */
 app.get('/health', (req, res) => {
-  res.send('OK');
+  res.json({ status: 'OK' });
 });
 
 app.listen(port, () => {
