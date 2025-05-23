@@ -1,101 +1,129 @@
 const express = require('express');
-const basicAuth = require('express-basic-auth');
 const cors = require('cors');
-const swaggerUi = require('swagger-ui-express');
+const basicAuth = require('express-basic-auth');
 const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3000;
-
 app.use(cors());
 app.use(express.json());
 
-// Swagger documentation configuration
-const swaggerOptions = {
-  swaggerDefinition: {
+const PORT = process.env.PORT || 3000;
+
+// Swagger configuration
+const swaggerSpec = swaggerJsdoc({
+  definition: {
     openapi: '3.0.0',
     info: {
       title: 'Financial Testing Sandbox API',
       version: '1.0.0',
       description: 'Interactive API documentation for the Financial Testing Sandbox platform.',
-      termsOfService: 'https://example.com/terms',
       contact: {
         name: 'Bernalo Lab Support',
-        url: 'https://sandbox-frontend-bernalo.azurewebsites.net',
-        email: 'support@bernalo.com'
+        url: 'https://bernalo.com',
+        email: 'support@bernalo.com',
       },
       license: {
         name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT'
-      }
+        url: 'https://opensource.org/licenses/MIT',
+      },
     },
     servers: [
       {
         url: 'https://sandbox-backend-bernalo.azurewebsites.net',
-        description: 'Production Server'
-      }
+        description: 'Production Server',
+      },
     ],
-    tags: [
-      { name: 'Status', description: 'System status and health checks' },
-      { name: 'Users', description: 'User data endpoints' },
-      { name: 'Utilities', description: 'General-purpose utility endpoints' }
-    ]
   },
-  apis: ['./index.js']
-};
-
-const swaggerSpec = swaggerJsdoc({
-  definition: swaggerDefinition,
-  apis: ['./index.js'], // ← Make sure this is correct
+  apis: ['./index.js'],
 });
 
-// Basic Auth for Swagger UI
-const swaggerUser = process.env.DOCS_USER || 'admin';
-const swaggerPass = process.env.DOCS_PASS || 'password';
+// Optional Swagger protection with basic auth
+const swaggerAuth = basicAuth({
+  users: { [process.env.DOCS_USER]: process.env.DOCS_PASS },
+  challenge: true,
+});
 
-app.use(['/api-docs', '/api-docs/*'],
-  basicAuth({
-    users: { [swaggerUser]: swaggerPass },
-    challenge: true
-  }),
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
+app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// API routes
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root path info
+ *     tags: [Utilities]
+ *     responses:
+ *       200:
+ *         description: Server is running.
+ */
+app.get('/', (req, res) => res.status(200).send('OK'));
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Returns application health
+ *     tags: [Status]
+ *     responses:
+ *       200:
+ *         description: App is healthy
+ */
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
+});
+
+/**
+ * @swagger
+ * /api/status:
+ *   get:
+ *     summary: Returns backend status
+ *     tags: [Status]
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 app.get('/api/status', (req, res) => {
-  res.json({
-    status: 'Backend is healthy',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-app.get('/', (req, res) => {
-  res.status(200).send('Backend API is running');
-});
-
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Retrieve a list of test users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: A list of users
+ */
 app.get('/api/users', (req, res) => {
-  res.json([
+  res.status(200).json([
     { name: 'Alice Tester', role: 'QA Engineer' },
     { name: 'Bob Developer', role: 'Software Engineer' },
-    { name: 'Eve Analyst', role: 'Business Analyst' }
+    { name: 'Eve Analyst', role: 'Business Analyst' },
   ]);
 });
 
+/**
+ * @swagger
+ * /api/echo:
+ *   post:
+ *     summary: Echo back posted JSON
+ *     tags: [Utilities]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Echoed response
+ */
 app.post('/api/echo', (req, res) => {
-  const { message } = req.body;
-  res.json({ received: { message } });
+  res.status(200).json({ received: req.body });
 });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
-});
-
-if (require.main === module) {
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
-}
-
-module.exports = app;
+app.listen(PORT, () => console.log(`Sandbox backend running on port ${PORT}`));
