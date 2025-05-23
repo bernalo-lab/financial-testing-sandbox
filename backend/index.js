@@ -56,6 +56,11 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+app.get('/', (req, res) => {
+  res.status(200).send('Backend API is running');
+});
+
+
 /**
  * @swagger
  * /api/users:
