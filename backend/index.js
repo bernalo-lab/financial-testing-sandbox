@@ -40,15 +40,6 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Sample endpoints
-/**
- * @swagger
- * /api/status:
- *   get:
- *     summary: Check API status
- *     responses:
- *       200:
- *         description: API is healthy
- */
 app.get('/api/status', (req, res) => {
   res.json({
     status: 'Backend is healthy',
@@ -60,16 +51,6 @@ app.get('/', (req, res) => {
   res.status(200).send('Backend API is running');
 });
 
-
-/**
- * @swagger
- * /api/users:
- *   get:
- *     summary: Get list of users
- *     responses:
- *       200:
- *         description: A list of users
- */
 app.get('/api/users', (req, res) => {
   res.json([
     { name: 'Alice Tester', role: 'QA Engineer' },
@@ -78,19 +59,19 @@ app.get('/api/users', (req, res) => {
   ]);
 });
 
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     responses:
- *       200:
- *         description: OK
- */
+app.post('/api/echo', (req, res) => {
+  const { message } = req.body;
+  res.json({ received: { message } });
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+module.exports = app;
