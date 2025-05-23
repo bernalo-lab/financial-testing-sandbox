@@ -1,102 +1,105 @@
-const express = require("express");
+
+require('dotenv').config();
+const express = require('express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const basicAuth = require('express-basic-auth');
+const cors = require('cors');
+
 const app = express();
-const cors = require("cors");
-const swaggerJsDoc = require("swagger-jsdoc");
-const swaggerUi = require("swagger-ui-express");
-require("dotenv").config();
-
-const PORT = process.env.PORT || 3000;
-
-// CORS setup
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-// Swagger setup
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Sandbox API",
-      version: "1.0.0",
-      description: "API documentation for the Financial Testing Sandbox",
-      contact: {
-        name: "Bernalo Lab",
-        url: "https://sandbox-frontend-bernalo.azurewebsites.net/"
-      },
-    },
-    servers: [{ url: "https://sandbox-backend-bernalo.azurewebsites.net" }]
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'Financial Testing Sandbox API',
+    version: '1.0.0',
+    description: 'Interactive API documentation for the Financial Testing Sandbox.',
   },
-  apis: ["./index.js"],
 };
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+const options = {
+  swaggerDefinition,
+  apis: ['./index.js'],
+};
 
-// Routes
+const swaggerSpec = swaggerJsdoc(options);
+
+// Basic Auth Middleware for Swagger UI
+const docsUser = process.env.DOCS_USER || 'admin';
+const docsPass = process.env.DOCS_PASS || 'password';
+
+app.use(['/api-docs', '/api-docs/*'],
+  basicAuth({
+    users: { [docsUser]: docsPass },
+    challenge: true,
+  }),
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the Financial Testing Sandbox Backend!');
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
+
 /**
  * @swagger
  * /api/users:
  *   get:
- *     summary: Returns a list of users
+ *     summary: Get a list of users
  *     tags: [Users]
  *     responses:
  *       200:
- *         description: A list of users.
+ *         description: List of user names
  */
-app.get("/api/users", (req, res) => {
-  const users = [
-    { name: "Alice Tester", role: "QA Engineer" },
-    { name: "Bob Developer", role: "Software Engineer" },
-    { name: "Eve Analyst", role: "Business Analyst" },
-  ];
-  res.json(users);
+app.get('/api/users', (req, res) => {
+  res.json([
+    { name: 'Alice Tester', role: 'QA Engineer' },
+    { name: 'Bob Developer', role: 'Software Engineer' },
+    { name: 'Eve Analyst', role: 'Business Analyst' }
+  ]);
+});
+
+/**
+ * @swagger
+ * /api/echo:
+ *   post:
+ *     summary: Echoes back received data
+ *     tags: [Utilities]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Echoed data
+ */
+app.post('/api/echo', (req, res) => {
+  res.json({ received: req.body });
 });
 
 /**
  * @swagger
  * /api/status:
  *   get:
- *     summary: Returns the status of the backend
- *     tags: [Health]
+ *     summary: Get backend service status
+ *     tags: [Utilities]
  *     responses:
  *       200:
- *         description: Service status and uptime.
+ *         description: Current backend status
  */
-app.get("/api/status", (req, res) => {
-  res.json({
-    status: "Backend is healthy",
-    timestamp: new Date().toISOString()
-  });
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Welcome route
- *     tags: [Welcome]
- *     responses:
- *       200:
- *         description: Welcome message.
- */
-app.get("/", (req, res) => {
-  res.send("Welcome to the Financial Testing Sandbox API!");
-});
-
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     tags: [Health]
- *     responses:
- *       200:
- *         description: Application is healthy.
- */
-app.get("/health", (req, res) => {
-  res.json({ status: 'OK' });
-});
-
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
