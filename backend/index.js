@@ -1,3 +1,4 @@
+
 const express = require('express');
 const basicAuth = require('express-basic-auth');
 const cors = require('cors');
@@ -39,7 +40,24 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Sample endpoints
+/**
+ * @swagger
+ * /api/status:
+ *   get:
+ *     summary: Get backend status
+ *     responses:
+ *       200:
+ *         description: Backend is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ */
 app.get('/api/status', (req, res) => {
   res.json({
     status: 'Backend is healthy',
@@ -47,10 +65,39 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root endpoint
+ *     responses:
+ *       200:
+ *         description: Backend API is running
+ */
 app.get('/', (req, res) => {
   res.status(200).send('Backend API is running');
 });
 
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Get users list
+ *     responses:
+ *       200:
+ *         description: Returns a list of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ */
 app.get('/api/users', (req, res) => {
   res.json([
     { name: 'Alice Tester', role: 'QA Engineer' },
@@ -59,11 +106,48 @@ app.get('/api/users', (req, res) => {
   ]);
 });
 
+/**
+ * @swagger
+ * /api/echo:
+ *   post:
+ *     summary: Echo back the posted JSON
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               message:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Echoed message
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 received:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ */
 app.post('/api/echo', (req, res) => {
   const { message } = req.body;
   res.json({ received: { message } });
 });
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     responses:
+ *       200:
+ *         description: Status OK
+ */
 app.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
