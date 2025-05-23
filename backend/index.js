@@ -1,105 +1,91 @@
-
-require('dotenv').config();
 const express = require('express');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
 const basicAuth = require('express-basic-auth');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
+require('dotenv').config();
 
 const app = express();
-app.use(express.json());
+const port = process.env.PORT || 3000;
+
 app.use(cors());
+app.use(express.json());
 
-const swaggerDefinition = {
-  openapi: '3.0.0',
-  info: {
-    title: 'Financial Testing Sandbox API',
-    version: '1.0.0',
-    description: 'Interactive API documentation for the Financial Testing Sandbox.',
+// Basic Auth Middleware for Swagger docs
+const swaggerUser = process.env.DOCS_USER || 'admin';
+const swaggerPass = process.env.DOCS_PASS || 'password';
+
+app.use(
+  ['/api-docs', '/api-docs/*'],
+  basicAuth({
+    users: { [swaggerUser]: swaggerPass },
+    challenge: true,
+  })
+);
+
+// Swagger setup
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Sandbox API',
+      version: '1.0.0',
+      description: 'Auto-generated Swagger docs for Sandbox APIs',
+    },
   },
-};
-
-const options = {
-  swaggerDefinition,
   apis: ['./index.js'],
 };
 
-const swaggerSpec = swaggerJsdoc(options);
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Basic Auth Middleware for Swagger UI
-const docsUser = process.env.DOCS_USER || 'admin';
-const docsPass = process.env.DOCS_PASS || 'password';
-
-app.use(['/api-docs', '/api-docs/*'],
-  basicAuth({
-    users: { [docsUser]: docsPass },
-    challenge: true,
-  }),
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
-
-app.get('/', (req, res) => {
-  res.send('Welcome to the Financial Testing Sandbox Backend!');
-});
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
+// Sample endpoints
+/**
+ * @swagger
+ * /api/status:
+ *   get:
+ *     summary: Check API status
+ *     responses:
+ *       200:
+ *         description: API is healthy
+ */
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: 'Backend is healthy',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 /**
  * @swagger
  * /api/users:
  *   get:
- *     summary: Get a list of users
- *     tags: [Users]
+ *     summary: Get list of users
  *     responses:
  *       200:
- *         description: List of user names
+ *         description: A list of users
  */
 app.get('/api/users', (req, res) => {
   res.json([
     { name: 'Alice Tester', role: 'QA Engineer' },
     { name: 'Bob Developer', role: 'Software Engineer' },
-    { name: 'Eve Analyst', role: 'Business Analyst' }
+    { name: 'Eve Analyst', role: 'Business Analyst' },
   ]);
 });
 
 /**
  * @swagger
- * /api/echo:
- *   post:
- *     summary: Echoes back received data
- *     tags: [Utilities]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Echoed data
- */
-app.post('/api/echo', (req, res) => {
-  res.json({ received: req.body });
-});
-
-/**
- * @swagger
- * /api/status:
+ * /health:
  *   get:
- *     summary: Get backend service status
- *     tags: [Utilities]
+ *     summary: Health check endpoint
  *     responses:
  *       200:
- *         description: Current backend status
+ *         description: OK
  */
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
+app.get('/health', (req, res) => {
+  res.send('OK');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
