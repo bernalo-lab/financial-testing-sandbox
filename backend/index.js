@@ -7,12 +7,14 @@ const swaggerUi = require('swagger-ui-express');
 require('dotenv').config();
 
 const app = express();
-const authRoutes = require('./authRoutes');
 app.use(cors());
 app.use(express.json());
-app.use('/auth', authRoutes);
 
 const PORT = process.env.PORT || 3000;
+
+// Import the /auth routes
+const authRoutes = require('./authRoutes');
+app.use('/auth', authRoutes);
 
 // Swagger configuration
 const swaggerSpec = swaggerJsdoc({
@@ -42,7 +44,7 @@ const swaggerSpec = swaggerJsdoc({
   apis: ['./index.js'],
 });
 
-// Optional Swagger protection with basic auth
+// Swagger UI with basic auth
 const swaggerAuth = basicAuth({
   users: { [process.env.DOCS_USER]: process.env.DOCS_PASS },
   challenge: true,
@@ -50,56 +52,16 @@ const swaggerAuth = basicAuth({
 
 app.use('/api-docs', swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Root path info
- *     tags: [Utilities]
- *     responses:
- *       200:
- *         description: Server is running.
- */
 app.get('/', (req, res) => res.status(200).send('OK'));
 
-/**
- * @swagger
- * /health:
- *   get:
- *     summary: Returns application health
- *     tags: [Status]
- *     responses:
- *       200:
- *         description: App is healthy
- */
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-/**
- * @swagger
- * /api/status:
- *   get:
- *     summary: Returns backend status
- *     tags: [Status]
- *     responses:
- *       200:
- *         description: OK
- */
 app.get('/api/status', (req, res) => {
   res.status(200).json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-/**
- * @swagger
- * /api/users:
- *   get:
- *     summary: Retrieve a list of test users
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: A list of users
- */
 app.get('/api/users', (req, res) => {
   res.status(200).json([
     { name: 'Alice Tester', role: 'QA Engineer' },
@@ -108,22 +70,6 @@ app.get('/api/users', (req, res) => {
   ]);
 });
 
-/**
- * @swagger
- * /api/echo:
- *   post:
- *     summary: Echo back posted JSON
- *     tags: [Utilities]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Echoed response
- */
 app.post('/api/echo', (req, res) => {
   res.status(200).json({ received: req.body });
 });
