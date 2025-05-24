@@ -46,6 +46,10 @@ app.get('/', (req, res) => {
   res.send('OK');
 });
 
+app.get('/health', (req, res) => {
+  res.send('OK');
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
