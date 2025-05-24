@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 
@@ -9,6 +11,24 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+const SECRET_KEY = process.env.JWT_SECRET || 'sandbox-secret-key';
+
+const users = [
+  { id: 1, username: 'admin', password: bcrypt.hashSync('password123', 10) },
+];
+
+// JWT Auth Middleware
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
 
 // Swagger configuration
 const swaggerOptions = {
@@ -16,14 +36,23 @@ const swaggerOptions = {
     openapi: '3.0.0',
     info: {
       title: 'Financial Testing Sandbox API',
-      version: '1.1.0',
-      description: 'Expanded API documentation for the Financial Testing Sandbox',
+      version: '2.0.0',
+      description: 'JWT-secured API documentation for the Financial Testing Sandbox',
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [{ bearerAuth: [] }],
     tags: [
       { name: 'Health', description: 'Health check endpoints' },
       { name: 'Users', description: 'User data endpoints' },
       { name: 'Auth', description: 'Authentication endpoints' },
-      { name: 'Documents', description: 'Document management endpoints' },
       { name: 'Utilities', description: 'Utility endpoints' },
     ]
   },
@@ -49,40 +78,17 @@ app.get('/api/status', (req, res) => {
 
 /**
  * @swagger
- * /health:
- *   get:
- *     summary: Basic health check
- *     tags: [Health]
- *     responses:
- *       200:
- *         description: Server is healthy
- */
-app.get('/health', (req, res) => {
-  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
-});
-
-/**
- * @swagger
  * /api/users:
  *   get:
- *     summary: Get a list of users
+ *     summary: Get a list of users (JWT Protected)
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: A list of users
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   name:
- *                     type: string
- *                   role:
- *                     type: string
  */
-app.get('/api/users', (req, res) => {
+app.get('/api/users', authenticateToken, (req, res) => {
   res.json([
     { name: 'Alice Tester', role: 'QA Engineer' },
     { name: 'Bob Developer', role: 'Software Engineer' },
@@ -94,7 +100,7 @@ app.get('/api/users', (req, res) => {
  * @swagger
  * /api/login:
  *   post:
- *     summary: Simulate a login
+ *     summary: Authenticate user and return a JWT
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -109,63 +115,16 @@ app.get('/api/users', (req, res) => {
  *                 type: string
  *     responses:
  *       200:
- *         description: Login successful
+ *         description: JWT token
  */
 app.post('/api/login', (req, res) => {
-  res.json({ message: 'Login successful', user: req.body.username });
-});
-
-/**
- * @swagger
- * /api/logout:
- *   post:
- *     summary: Simulate a logout
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Logout successful
- */
-app.post('/api/logout', (req, res) => {
-  res.json({ message: 'Logout successful' });
-});
-
-/**
- * @swagger
- * /api/documents:
- *   get:
- *     summary: Retrieve all documents
- *     tags: [Documents]
- *     responses:
- *       200:
- *         description: A list of documents
- */
-app.get('/api/documents', (req, res) => {
-  res.json([{ id: 1, title: 'Test Plan' }, { id: 2, title: 'Bug Report' }]);
-});
-
-/**
- * @swagger
- * /api/documents/{id}:
- *   get:
- *     summary: Retrieve a specific document by ID
- *     tags: [Documents]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: A document
- *       404:
- *         description: Document not found
- */
-app.get('/api/documents/:id', (req, res) => {
-  const docs = { 1: 'Test Plan', 2: 'Bug Report' };
-  const doc = docs[req.params.id];
-  if (doc) res.json({ id: req.params.id, title: doc });
-  else res.status(404).json({ message: 'Document not found' });
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username);
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+  res.json({ token });
 });
 
 /**
@@ -182,18 +141,14 @@ app.get('/api/documents/:id', (req, res) => {
  *             type: object
  *     responses:
  *       200:
- *         description: Returns posted data
+ *         description: Echoed data
  */
 app.post('/api/echo', (req, res) => {
   res.json({ received: req.body });
 });
 
-app.get('/api', (req, res) => {
-  res.send('API is available. Try /api/status or /api/users');
-});
-
 app.get('/', (req, res) => {
-  res.send('Welcome to the Financial Testing Sandbox API');
+  res.send('Welcome to the JWT-Secured Financial Testing Sandbox API');
 });
 
 app.listen(PORT, () => {
