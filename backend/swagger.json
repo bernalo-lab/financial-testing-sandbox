@@ -3,12 +3,90 @@
   "info": {
     "title": "Financial Testing Sandbox API",
     "version": "1.0.0",
-    "description": "Interactive API documentation for the Financial Testing Sandbox platform."
+    "description": "Complete API documentation including status, users, utilities, and auth routes."
   },
   "paths": {
+    "/": {
+      "get": {
+        "summary": "Root path info",
+        "tags": [
+          "Utilities"
+        ],
+        "responses": {
+          "200": {
+            "description": "Server is running."
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Returns application health",
+        "tags": [
+          "Status"
+        ],
+        "responses": {
+          "200": {
+            "description": "App is healthy"
+          }
+        }
+      }
+    },
+    "/api/status": {
+      "get": {
+        "summary": "Returns backend status",
+        "tags": [
+          "Status"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "Retrieve a list of test users",
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of users"
+          }
+        }
+      }
+    },
+    "/api/echo": {
+      "post": {
+        "summary": "Echo back posted JSON",
+        "tags": [
+          "Utilities"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Echoed response"
+          }
+        }
+      }
+    },
     "/auth/register": {
       "post": {
         "summary": "Register a new user",
+        "tags": [
+          "Auth"
+        ],
         "requestBody": {
           "required": true,
           "content": {
