@@ -26,6 +26,10 @@ app.get('/api/users', (req, res) => {
   ]);
 });
 
+app.get('/api', (req, res) => {
+  res.send('API is available. Try /api/status or /api/users');
+});
+
 app.get('/', (req, res) => {
   res.send('Welcome to the Financial Testing Sandbox API');
 });
