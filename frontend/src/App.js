@@ -9,7 +9,7 @@ function App() {
   useEffect(() => {
   const checkHealth = async () => {
     try {
-      const res = await fetch(`${backendUrl}/health`);
+      const res = await fetch(`${backendUrl}/api/status`);
       const data = await res.json(); // expects JSON: { status: 'OK' }
       setHealth(`Status: ${data.status}`);
     } catch (error) {
