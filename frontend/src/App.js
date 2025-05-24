@@ -9,7 +9,8 @@ function App() {
     const checkHealth = async () => {
       try {
         const res = await fetch(`${backendUrl}/api/status`);
-        const data = await res.json(); // expects JSON: { status: 'OK' }
+        if (!res.ok) throw new Error('Network response not ok');
+        const data = await res.json();
         setHealth(`Status: ${data.status}`);
       } catch (error) {
         console.error('Backend not reachable:', error);
@@ -20,6 +21,7 @@ function App() {
     const fetchUsers = async () => {
       try {
         const res = await fetch(`${backendUrl}/api/users`);
+        if (!res.ok) throw new Error('User fetch failed');
         const data = await res.json();
         setUsers(data);
       } catch (error) {
