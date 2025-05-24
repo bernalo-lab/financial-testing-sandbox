@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 
 function App() {
@@ -7,20 +6,16 @@ function App() {
   const backendUrl = 'https://sandbox-backend-bernalo.azurewebsites.net';
 
   useEffect(() => {
-  const checkHealth = async () => {
-    try {
-      const res = await fetch(`${backendUrl}/api/status`);
-      const data = await res.json(); // expects JSON: { status: 'OK' }
-      setHealth(`Status: ${data.status}`);
-    } catch (error) {
-      console.error('Backend not reachable:', error);
-      setHealth('Backend not reachable');
-    }
-  };
-
-  checkHealth();
-  }, []);
-
+    const checkHealth = async () => {
+      try {
+        const res = await fetch(`${backendUrl}/api/status`);
+        const data = await res.json(); // expects JSON: { status: 'OK' }
+        setHealth(`Status: ${data.status}`);
+      } catch (error) {
+        console.error('Backend not reachable:', error);
+        setHealth('Backend not reachable');
+      }
+    };
 
     const fetchUsers = async () => {
       try {
