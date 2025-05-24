@@ -13,6 +13,10 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
+app.get('/health', (req, res) => {
+  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
+});
+
 // Example users endpoint
 app.get('/api/users', (req, res) => {
   res.json([
@@ -20,6 +24,10 @@ app.get('/api/users', (req, res) => {
     { name: 'Bob Developer', role: 'Software Engineer' },
     { name: 'Eve Analyst', role: 'Business Analyst' },
   ]);
+});
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the Financial Testing Sandbox API');
 });
 
 app.listen(PORT, () => {
