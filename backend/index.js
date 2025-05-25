@@ -39,6 +39,9 @@ function authenticateToken(req, res, next) {
 }
 
 async function handleLogin(req, res) {
+  if (!usersCollection) {
+    return res.status(500).json({ message: 'Database not initialized' });
+  }
   const { username, password } = req.body;
   const user = await usersCollection.findOne({ username });
   if (!user || !bcrypt.compareSync(password, user.password)) {
@@ -78,6 +81,10 @@ const swaggerOptions = {
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
+});
 
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
