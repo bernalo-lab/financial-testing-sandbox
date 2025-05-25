@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const { MongoClient } = require('mongodb');
 
 const app = express();
 app.use(cors());
@@ -12,16 +13,24 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'sandbox-secret-key';
+const MONGO_URI = process.env.MONGO_URI || 'your-cosmos-db-connection-string';
+const DB_NAME = 'sandboxDB';
+const COLLECTION_NAME = 'users';
 
-let users = [
-  { id: 1, username: 'admin', password: bcrypt.hashSync('password123', 10) },
-];
+let db, usersCollection;
+
+MongoClient.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(client => {
+    db = client.db(DB_NAME);
+    usersCollection = db.collection(COLLECTION_NAME);
+    console.log('Connected to Azure Cosmos DB');
+  })
+  .catch(err => console.error('MongoDB connection error:', err));
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (!token) return res.sendStatus(401);
-
   jwt.verify(token, SECRET_KEY, (err, user) => {
     if (err) return res.sendStatus(403);
     req.user = user;
@@ -29,13 +38,13 @@ function authenticateToken(req, res, next) {
   });
 }
 
-function handleLogin(req, res) {
+async function handleLogin(req, res) {
   const { username, password } = req.body;
-  const user = users.find(u => u.username === username);
+  const user = await usersCollection.findOne({ username });
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
-  const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+  const token = jwt.sign({ id: user._id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
   res.json({ token });
 }
 
@@ -44,8 +53,8 @@ const swaggerOptions = {
     openapi: '3.0.0',
     info: {
       title: 'Financial Testing Sandbox API',
-      version: '2.1.0',
-      description: 'JWT-secured API documentation for the Financial Testing Sandbox',
+      version: '2.2.0',
+      description: 'JWT-secured API documentation using Azure Cosmos DB for user data',
     },
     components: {
       securitySchemes: {
@@ -70,78 +79,17 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-/**
- * @swagger
- * /api/status:
- *   get:
- *     tags: [Health]
- *     summary: Check backend health status
- *     responses:
- *       200:
- *         description: Server is healthy
- */
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-/**
- * @swagger
- * /api/users:
- *   get:
- *     tags: [Users]
- *     summary: Get list of users (JWT required)
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of users (excluding passwords)
- */
-app.get('/api/users', authenticateToken, (req, res) => {
-  res.json(users.map(({ password, ...rest }) => rest));
+app.get('/api/users', authenticateToken, async (req, res) => {
+  const users = await usersCollection.find({}, { projection: { password: 0 } }).toArray();
+  res.json(users);
 });
 
-/**
- * @swagger
- * /api/login:
- *   post:
- *     tags: [Auth]
- *     summary: Login with username and password (POST)
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: JWT token
- */
 app.post('/api/login', handleLogin);
 
-/**
- * @swagger
- * /api/login:
- *   get:
- *     tags: [Auth]
- *     summary: Login with username and password via query params (GET)
- *     parameters:
- *       - in: query
- *         name: username
- *         schema:
- *           type: string
- *       - in: query
- *         name: password
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: JWT token
- */
 app.get('/api/login', (req, res) => {
   req.body = {
     username: req.query.username,
@@ -150,70 +98,21 @@ app.get('/api/login', (req, res) => {
   handleLogin(req, res);
 });
 
-/**
- * @swagger
- * /api/register:
- *   post:
- *     tags: [Auth]
- *     summary: Register a new user
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       201:
- *         description: User registered successfully
- */
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
-  if (users.find(u => u.username === username)) {
-    return res.status(409).json({ message: 'User already exists' });
-  }
-  const id = users.length + 1;
+  const exists = await usersCollection.findOne({ username });
+  if (exists) return res.status(409).json({ message: 'User already exists' });
   const hashedPassword = bcrypt.hashSync(password, 10);
-  users.push({ id, username, password: hashedPassword });
-  res.status(201).json({ message: 'User registered successfully', id });
+  const result = await usersCollection.insertOne({ username, password: hashedPassword });
+  res.status(201).json({ message: 'User registered successfully', id: result.insertedId });
 });
 
-/**
- * @swagger
- * /api/echo:
- *   post:
- *     tags: [Utilities]
- *     summary: Echo back JSON data
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Echoed back input
- */
 app.post('/api/echo', (req, res) => {
   res.json({ received: req.body });
 });
 
-/**
- * @swagger
- * /:
- *   get:
- *     tags: [Health]
- *     summary: Root welcome endpoint
- *     responses:
- *       200:
- *         description: Welcome message
- */
 app.get('/', (req, res) => {
-  res.send('Welcome to the JWT-Secured Financial Testing Sandbox API');
+  res.send('Welcome to the JWT-Secured Financial Testing Sandbox API with Cosmos DB');
 });
 
 app.listen(PORT, () => {
