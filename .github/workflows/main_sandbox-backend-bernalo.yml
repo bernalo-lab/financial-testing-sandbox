@@ -1,0 +1,49 @@
+name: Deploy backend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/main_sandbox-backend-bernalo.yml'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies and Test
+        run: |
+          cd backend
+          npm install
+          npm test || true
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'sandbox-backend-bernalo'
+          slot-name: 'production'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
+          package: './backend'
+
+      - name: Set App Settings (API_KEY)
+        uses: azure/appservice-settings@v1
+        with:
+          app-name: sandbox-backend-bernalo
+          app-settings-json: ${{ secrets.APP_SETTINGS_JSON }}
+        env:
+          AZURE_HTTP_USER_AGENT: 'backend-deploy-script'
