@@ -29,6 +29,16 @@ function authenticateToken(req, res, next) {
   });
 }
 
+function handleLogin(req, res) {
+  const { username, password } = req.body;
+  const user = users.find(u => u.username === username);
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
+  const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
+  res.json({ token });
+}
+
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
