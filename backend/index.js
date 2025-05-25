@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'sandbox-secret-key';
-const MONGO_URI = process.env.MONGO_URI || 'your-cosmos-db-connection-string';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://sandbox-cosmos-db:VHU...@sandbox-cosmos-db.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb';
 const DB_NAME = 'sandboxDB';
 const COLLECTION_NAME = 'users';
 
