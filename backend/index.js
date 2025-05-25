@@ -1,15 +1,15 @@
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
 const { MongoClient } = require('mongodb');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'sandbox-secret-key';
@@ -51,37 +51,6 @@ async function handleLogin(req, res) {
   res.json({ token });
 }
 
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Financial Testing Sandbox API',
-      version: '2.2.0',
-      description: 'JWT-secured API documentation using Azure Cosmos DB for user data',
-    },
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-        },
-      },
-    },
-    security: [{ bearerAuth: [] }],
-    tags: [
-      { name: 'Health' },
-      { name: 'Users' },
-      { name: 'Auth' },
-      { name: 'Utilities' }
-    ]
-  },
-  apis: ['./index.js'],
-};
-
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
 app.get('/health', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
@@ -105,13 +74,37 @@ app.get('/api/login', (req, res) => {
   handleLogin(req, res);
 });
 
+app.get('/api/register', (req, res) => {
+  res.send(`
+    <h1>Registration Form</h1>
+    <form method="POST" action="/api/register">
+      <label>First Name*: <input type="text" name="firstName" required></label><br>
+      <label>Middle Name: <input type="text" name="middleName"></label><br>
+      <label>Last Name*: <input type="text" name="lastName" required></label><br>
+      <label>Job Title*: <input type="text" name="jobTitle" required></label><br>
+      <label>Email Address*: <input type="email" name="email" required></label><br>
+      <label>Mobile Phone: <input type="text" name="mobile"></label><br>
+      <label>Password*: <input type="password" name="password" required></label><br>
+      <input type="submit" value="Register">
+    </form>
+  `);
+});
+
 app.post('/api/register', async (req, res) => {
-  const { username, password } = req.body;
-  const exists = await usersCollection.findOne({ username });
-  if (exists) return res.status(409).json({ message: 'User already exists' });
+  const { email, password, firstName, middleName, lastName, jobTitle, mobile } = req.body;
+  const exists = await usersCollection.findOne({ email });
+  if (exists) return res.status(409).send('User already exists');
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const result = await usersCollection.insertOne({ username, password: hashedPassword });
-  res.status(201).json({ message: 'User registered successfully', id: result.insertedId });
+  const result = await usersCollection.insertOne({
+    email,
+    password: hashedPassword,
+    firstName,
+    middleName,
+    lastName,
+    jobTitle,
+    mobile
+  });
+  res.send('Registration successful!');
 });
 
 app.post('/api/echo', (req, res) => {
