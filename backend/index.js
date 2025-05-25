@@ -13,7 +13,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'sandbox-secret-key';
 
-const users = [
+let users = [
   { id: 1, username: 'admin', password: bcrypt.hashSync('password123', 10) },
 ];
 
@@ -34,7 +34,7 @@ const swaggerOptions = {
     openapi: '3.0.0',
     info: {
       title: 'Financial Testing Sandbox API',
-      version: '2.0.0',
+      version: '2.1.0',
       description: 'JWT-secured API documentation for the Financial Testing Sandbox',
     },
     components: {
@@ -65,14 +65,21 @@ app.get('/api/status', (req, res) => {
 });
 
 app.get('/api/users', authenticateToken, (req, res) => {
-  res.json([
-    { name: 'Alice Tester', role: 'QA Engineer' },
-    { name: 'Bob Developer', role: 'Software Engineer' },
-    { name: 'Eve Analyst', role: 'Business Analyst' },
-  ]);
+  res.json(users.map(({ password, ...rest }) => rest));
 });
 
-app.post('/api/login', (req, res) => {
+// Support both POST and GET for /api/login
+app.post('/api/login', handleLogin);
+app.get('/api/login', (req, res) => {
+  // Simulate GET login with query params
+  req.body = {
+    username: req.query.username,
+    password: req.query.password
+  };
+  handleLogin(req, res);
+});
+
+function handleLogin(req, res) {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username);
   if (!user || !bcrypt.compareSync(password, user.password)) {
@@ -80,6 +87,18 @@ app.post('/api/login', (req, res) => {
   }
   const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
   res.json({ token });
+}
+
+// Register new users
+app.post('/api/register', (req, res) => {
+  const { username, password } = req.body;
+  if (users.find(u => u.username === username)) {
+    return res.status(409).json({ message: 'User already exists' });
+  }
+  const id = users.length + 1;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+  users.push({ id, username, password: hashedPassword });
+  res.status(201).json({ message: 'User registered successfully', id });
 });
 
 app.post('/api/echo', (req, res) => {
