@@ -91,21 +91,34 @@ app.get('/api/register', (req, res) => {
 });
 
 app.post('/api/register', async (req, res) => {
+  if (!usersCollection) {
+    return res.status(500).json({ message: 'Database not initialized' });
+  }
+
   const { email, password, firstName, middleName, lastName, jobTitle, mobile } = req.body;
-  const exists = await usersCollection.findOne({ email });
-  if (exists) return res.status(409).send('User already exists');
-  const hashedPassword = bcrypt.hashSync(password, 10);
-  const result = await usersCollection.insertOne({
-    email,
-    password: hashedPassword,
-    firstName,
-    middleName,
-    lastName,
-    jobTitle,
-    mobile
-  });
-  res.send('Registration successful!');
+
+  try {
+    const exists = await usersCollection.findOne({ email });
+    if (exists) return res.status(409).send('User already exists');
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    await usersCollection.insertOne({
+      email,
+      password: hashedPassword,
+      firstName,
+      middleName,
+      lastName,
+      jobTitle,
+      mobile
+    });
+
+    res.send('Registration successful!');
+  } catch (error) {
+    console.error('Registration failed:', error.message);
+    res.status(500).send('Registration failed due to a server error.');
+  }
 });
+
 
 app.post('/api/echo', (req, res) => {
   res.json({ received: req.body });
