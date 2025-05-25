@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'JAxh7YyGOANQmPlEXRPhXJE5t4EyLg72HP+d92FVCL6hChWyTDLzKvrwO73BsDB9jRYPBeuc8kyQ9pslkXpoAQ==';
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://sandbox-cosmos-db:VHU...@sandbox-cosmos-db.mongo.cosmos.azure.com:10255/?ssl=true&retrywrites=false&replicaSet=globaldb';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://sandbox-cosmos-db:VHUEHZFGW716pKp8nW8EFNBzoWWr8JskTBwFblYvoBK5fZL3Z1WnV7rOreFsk3Mqw816LVUpiSQsACDb8E0RMA==@sandbox-cosmos-db.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@sandbox-cosmos-db@';
 const DB_NAME = 'sandboxDB';
 const COLLECTION_NAME = 'users';
 
