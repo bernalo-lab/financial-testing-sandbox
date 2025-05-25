@@ -62,32 +62,10 @@ const swaggerOptions = {
 const swaggerSpec = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-/**
- * @swagger
- * /api/status:
- *   get:
- *     summary: Check the backend health status
- *     tags: [Health]
- *     responses:
- *       200:
- *         description: Server is healthy
- */
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
-/**
- * @swagger
- * /api/users:
- *   get:
- *     summary: Get a list of users (JWT Protected)
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: A list of users
- */
 app.get('/api/users', authenticateToken, (req, res) => {
   res.json([
     { name: 'Alice Tester', role: 'QA Engineer' },
@@ -96,27 +74,6 @@ app.get('/api/users', authenticateToken, (req, res) => {
   ]);
 });
 
-/**
- * @swagger
- * /api/login:
- *   post:
- *     summary: Authenticate user and return a JWT
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: JWT token
- */
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
   const user = users.find(u => u.username === username);
@@ -127,22 +84,6 @@ app.post('/api/login', (req, res) => {
   res.json({ token });
 });
 
-/**
- * @swagger
- * /api/echo:
- *   post:
- *     summary: Echo back posted data
- *     tags: [Utilities]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: Echoed data
- */
 app.post('/api/echo', (req, res) => {
   res.json({ received: req.body });
 });
