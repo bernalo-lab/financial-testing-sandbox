@@ -1,5 +1,9 @@
+# GitHub Actions workflow failed due to missing `package.json`
+# This indicates your `deploy.yml` or workflow is running from a directory that does not contain the backend source files.
 
-name: deploy
+# Here's a fixed workflow assuming the backend lives in the root or `backend` directory. Adjust `working-directory:` accordingly.
+
+name: build-and-deploy
 
 on:
   push:
@@ -9,32 +13,35 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend # <- adjust if needed
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18.x'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Create .env file
         run: |
-          echo "CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}" >> .env
-          echo "MONGO_DB_NAME=sandboxDB" >> .env
-          echo "MONGO_COLLECTION_NAME=users" >> .env
-          echo "JWT_SECRET=YourSecretKeyHere" >> .env
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}" >> .env
+          echo "MONGO_COLLECTION_NAME=${{ secrets.MONGO_COLLECTION_NAME }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 
       - name: Build project
-        run: npm run build || echo "No build script defined, skipping."
+        run: npm run build # if applicable
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'sandbox-backend-bernalo'
+          app-name: 'sandbox-backend-bernalo'  # change to your Azure app name
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
           package: .
