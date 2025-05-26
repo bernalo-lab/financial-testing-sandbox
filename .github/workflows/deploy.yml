@@ -22,8 +22,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-
       - name: Install dependencies
+        working-directory: ./backend
         run: npm install
 
       - name: Create .env file
@@ -37,6 +37,10 @@ jobs:
           echo "CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}" >> .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
           echo "APPINSIGHTS_CONNECTION_STRING=${{ secrets.APPINSIGHTS_CONNECTION_STRING_BACKEND }}" >> .env
+
+      - name: Build project
+        working-directory: ./backend
+        run: npm run build
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
