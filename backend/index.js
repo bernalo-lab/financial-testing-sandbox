@@ -1,7 +1,7 @@
 
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config({ path: '.env.example' });
+require('dotenv').config(); // ← loads from .env by default
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { MongoClient } = require('mongodb');
@@ -128,6 +128,25 @@ app.get('/', (req, res) => {
   res.send('Welcome to the JWT-Secured Financial Testing Sandbox API with Cosmos DB');
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend running on port ${PORT}`);
-});
+// Add at the very bottom of your current index.js file:
+
+async function startServer() {
+  try {
+    const client = await MongoClient.connect(MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    db = client.db(DB_NAME);
+    usersCollection = db.collection(COLLECTION_NAME);
+    console.log('✅ Connected to Azure Cosmos DB');
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Backend running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+  }
+}
+
+startServer(); // << Call the wrapped async init
