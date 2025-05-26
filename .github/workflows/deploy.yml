@@ -15,7 +15,7 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
-      with:
+        with:
           submodules: 'false'
 
       - name: Set up Node.js
@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Create .env file
-    working-directory: ./backend
+        working-directory: ./backend
         run: |
           echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
           echo "MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }}" >> .env
