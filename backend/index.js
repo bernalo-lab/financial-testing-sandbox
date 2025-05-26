@@ -83,7 +83,7 @@ app.get('/api/register', (req, res) => {
       <label>Last Name*: <input type="text" name="lastName" required></label><br>
       <label>Job Title*: <input type="text" name="jobTitle" required></label><br>
       <label>Email Address*: <input type="email" name="email" required></label><br>
-      <label>Mobile Phone: <input type="text" name="mobile"></label><br>
+      <label>Mobile Phone: <input type="text" name="mobile" required></label><br>
       <label>Password*: <input type="password" name="password" required></label><br>
       <input type="submit" value="Register">
     </form>
