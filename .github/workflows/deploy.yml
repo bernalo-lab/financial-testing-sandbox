@@ -1,4 +1,4 @@
-name: deploy
+name: Deploy Backend to Azure
 
 on:
   push:
@@ -25,14 +25,16 @@ jobs:
       - name: Create .env file
         working-directory: backend
         run: |
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "CONNECTION_STRING=${{ secrets.MONGO_URI }}" >> .env
+          echo "MONGO_DB_NAME=sandboxDB" >> .env
+          echo "MONGO_COLLECTION_NAME=users" >> .env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
 
       - name: Build and Test
         working-directory: backend
         run: |
           npm run build || echo "Skipping build step if not defined"
-          npm test || echo "No tests defined"
+          npm test || echo "Skipping test step if not defined"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
