@@ -1,85 +1,69 @@
 
 const express = require('express');
 const bodyParser = require('body-parser');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { MongoClient } = require('mongodb');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
 const app = express();
 const port = process.env.PORT || 8080;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+if (!process.env.CONNECTION_STRING) {
+  console.error('❌ Error: CONNECTION_STRING environment variable is not set.');
+  process.exit(1);
+}
+
+const client = new MongoClient(process.env.CONNECTION_STRING);
 let usersCollection;
 
-async function connectToMongoDB() {
+async function initializeDbConnection() {
   try {
-    const client = new MongoClient(process.env.CONNECTION_STRING);
     await client.connect();
-    const db = client.db(process.env.MONGO_DB_NAME);
-    usersCollection = db.collection(process.env.MONGO_COLLECTION_NAME);
-    console.log('Connected to Azure Cosmos DB');
-  } catch (err) {
-    console.error('Failed to connect to database:', err.message);
+    const database = client.db(process.env.MONGO_DB_NAME);
+    usersCollection = database.collection(process.env.MONGO_COLLECTION_NAME);
+    console.log('✅ Connected to Azure Cosmos DB');
+  } catch (error) {
+    console.error('❌ Failed to connect to database:', error.message);
+    process.exit(1);
   }
 }
 
-connectToMongoDB();
-
-app.get('/api/register', (req, res) => {
-  res.send(`
-    <form method="POST" action="/api/register">
-      <label>Username*: <input type="text" name="username" required></label><br>
-      <label>Email Address*: <input type="email" name="email" required></label><br>
-      <label>Password*: <input type="password" name="password" required></label><br>
-      <label>First Name*: <input type="text" name="firstName" required></label><br>
-      <label>Middle Name: <input type="text" name="middleName"></label><br>
-      <label>Last Name*: <input type="text" name="lastName" required></label><br>
-      <label>Job Title*: <input type="text" name="jobTitle" required></label><br>
-      <label>Mobile Phone: <input type="tel" name="mobile"></label><br>
-      <button type="submit">Register</button>
-    </form>
-  `);
-});
+initializeDbConnection();
 
 app.post('/api/register', async (req, res) => {
   if (!usersCollection) {
     return res.status(500).json({ message: 'Database not initialized' });
   }
 
-  const {
-    username, email, password,
-    firstName, middleName,
-    lastName, jobTitle, mobile
-  } = req.body;
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: 'username, email, and password are required.' });
-  }
+  const { firstName, middleName, lastName, jobTitle, email, mobilePhone } = req.body;
 
   try {
-    const exists = await usersCollection.findOne({ username });
-    if (exists) return res.status(409).send('User already exists');
+    const exists = await usersCollection.findOne({ email });
+    if (exists) {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    await usersCollection.insertOne({
-      username,
-      email,
-      password: hashedPassword,
+    const result = await usersCollection.insertOne({
       firstName,
       middleName,
       lastName,
       jobTitle,
-      mobile
+      email,
+      mobilePhone,
     });
 
-    res.send('Registration successful!');
+    res.status(201).json({ message: 'Registration successful', id: result.insertedId });
   } catch (error) {
-    console.error('Registration failed:', error.message);
-    res.status(500).send('Registration failed due to a server error.');
+    console.error('❌ Registration failed:', error.message);
+    res.status(500).json({ message: 'Registration failed due to a server error.' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Backend running on port ${port}`);
+  console.log(`✅ Backend running on port ${port}`);
 });

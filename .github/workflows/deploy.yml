@@ -1,4 +1,5 @@
-name: Deploy Node App to Azure
+
+name: deploy
 
 on:
   push:
@@ -10,27 +11,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
-
-      - name: Create .env file
-        run: |
-          echo CONNECTION_STRING=${{ secrets.CONNECTION_STRING }} >> .env
-          echo MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }} >> .env
-          echo MONGO_COLLECTION_NAME=${{ secrets.MONGO_COLLECTION_NAME }} >> .env
-          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+          node-version: '18.x'
 
       - name: Install dependencies
         run: npm install
 
+      - name: Create .env file
+        run: |
+          echo "CONNECTION_STRING=${{ secrets.CONNECTION_STRING }}" >> .env
+          echo "MONGO_DB_NAME=sandboxDB" >> .env
+          echo "MONGO_COLLECTION_NAME=users" >> .env
+          echo "JWT_SECRET=YourSecretKeyHere" >> .env
+
+      - name: Build project
+        run: npm run build || echo "No build script defined, skipping."
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: sandbox-backend-bernalo
+          app-name: 'sandbox-backend-bernalo'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
           package: .
