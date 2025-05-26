@@ -13,6 +13,7 @@ const port = process.env.PORT || 8080;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+console.log('🔍 CONNECTION_STRING value:', process.env.CONNECTION_STRING);
 if (!process.env.CONNECTION_STRING) {
   console.error('❌ Error: CONNECTION_STRING environment variable is not set.');
   process.exit(1);
