@@ -1,4 +1,4 @@
-name: Deploy Backend to Azure
+name: Deploy Node App to Azure
 
 on:
   push:
@@ -13,32 +13,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        working-directory: backend
-        run: npm install
-
       - name: Create .env file
-        working-directory: backend
         run: |
-          echo "CONNECTION_STRING=${{ secrets.MONGO_URI }}" >> .env
-          echo "MONGO_DB_NAME=sandboxDB" >> .env
-          echo "MONGO_COLLECTION_NAME=users" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo CONNECTION_STRING=${{ secrets.CONNECTION_STRING }} >> .env
+          echo MONGO_DB_NAME=${{ secrets.MONGO_DB_NAME }} >> .env
+          echo MONGO_COLLECTION_NAME=${{ secrets.MONGO_COLLECTION_NAME }} >> .env
+          echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
 
-      - name: Build and Test
-        working-directory: backend
-        run: |
-          npm run build || echo "Skipping build step if not defined"
-          npm test || echo "Skipping test step if not defined"
+      - name: Install dependencies
+        run: npm install
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'sandbox-backend-bernalo'
+          app-name: sandbox-backend-bernalo
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
-          package: backend
+          package: .
