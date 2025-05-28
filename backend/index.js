@@ -33,9 +33,12 @@ const swaggerOptions = {
   apis: ['./index.js'], // Adjust path if routes are in another file
 };
 
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
+// const swaggerDocs = swaggerJsdoc(swaggerOptions);
+//app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+const swaggerUi = require('swagger-ui-express');
+const fs = require('fs');
+const swaggerDocument = JSON.parse(fs.readFileSync('./swagger.json', 'utf8'));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
