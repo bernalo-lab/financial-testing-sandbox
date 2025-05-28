@@ -58,22 +58,86 @@ function authenticateToken(req, res, next) {
   });
 }
 
+/**
+ * @swagger
+ * /:
+ *   get:
+ *     summary: Root path info
+ *     tags:
+ *       - Utilities
+ *     responses:
+ *       200:
+ *         description: Server is running.
+ */
+
 app.get('/', (req, res) => {
   res.send('Welcome to the JWT-Secured Financial Testing Sandbox API with Cosmos DB');
 });
+
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Returns application health
+ *     tags:
+ *       - Status
+ *     responses:
+ *       200:
+ *         description: App is healthy
+ */
 
 app.get('/health', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
+/**
+ * @swagger
+ * /api/status:
+ *   get:
+ *     summary: Returns backend status
+ *     tags:
+ *       - Status
+ *     responses:
+ *       200:
+ *         description: OK
+ */
+
 app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
+
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Retrieve a list of test users
+ *     tags:
+ *       - Users
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of users
+ *       401:
+ *         description: Unauthorized
+ */
 
 app.get('/api/users', authenticateToken, async (req, res) => {
   const users = await usersCollection.find({}, { projection: { password: 0 } }).toArray();
   res.json(users);
 });
+
+/**
+ * @swagger
+ * /api/login:
+ *   get:
+ *     summary: Render login form
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: Login form HTML
+ */
 
 app.get('/api/login', (req, res) => {
   res.send(`
@@ -84,6 +148,36 @@ app.get('/api/login', (req, res) => {
     </form>
   `);
 });
+
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Authenticate a user
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               password:
+ *                 type: string
+ *                 example: secure123
+ *             required:
+ *               - username
+ *               - password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ */
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
@@ -120,6 +214,18 @@ app.post('/api/login', async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/register:
+ *   get:
+ *     summary: Render registration form
+ *     tags:
+ *       - Auth
+ *     responses:
+ *       200:
+ *         description: Registration form HTML
+ */
+
 app.get('/api/register', (req, res) => {
   res.send(`
     <form method="POST" action="/api/register">
@@ -135,6 +241,52 @@ app.get('/api/register', (req, res) => {
     </form>
   `);
 });
+
+/**
+ * @swagger
+ * /api/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               firstName:
+ *                 type: string
+ *               middleName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               jobTitle:
+ *                 type: string
+ *               mobile:
+ *                 type: string
+ *             required:
+ *               - username
+ *               - email
+ *               - password
+ *               - firstName
+ *               - lastName
+ *               - jobTitle
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Missing required fields
+ *       409:
+ *         description: User already exists
+ */
 
 app.post('/api/register', async (req, res) => {
   if (!usersCollection) return res.status(500).json({ message: 'Database not initialized' });
