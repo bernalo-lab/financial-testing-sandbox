@@ -21,7 +21,7 @@ const COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || 'users';
 const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
 const path = require('path');
-const swaggerDocument = JSON.parse(fs.readFileSync(path.join(__dirname, 'swagger.js'), 'utf8'));
+const swaggerDocument = JSON.parse(fs.readFileSync(path.join(__dirname, 'swagger.json'), 'utf8'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
