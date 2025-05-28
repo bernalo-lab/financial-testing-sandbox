@@ -20,7 +20,7 @@ const COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || 'users';
 //app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 const swaggerUi = require('swagger-ui-express');
 const fs = require('fs');
-const swaggerDocument = JSON.parse(fs.readFileSync('./swagger.json', 'utf8'));
+const swaggerDocument = JSON.parse(fs.readFileSync('./backend/swagger.json', 'utf8'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
@@ -114,7 +114,7 @@ app.post('/api/login', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Login error:', error.message);
-    res.status(500).json({ message: 'Server error during login.' });
+    res.status(500).json({ message: '❌Server error during login.' });
   }
 });
 
@@ -138,10 +138,10 @@ app.get('/api/register', (req, res) => {
 app.post('/api/register', async (req, res) => {
   if (!usersCollection) return res.status(500).json({ message: 'Database not initialized' });
   const { username, email, password, firstName, middleName, lastName, jobTitle, mobile } = req.body;
-  if (!username || !email || !password) return res.status(400).json({ message: 'Missing required fields.' });
+  if (!username || !email || !password) return res.status(400).json({ message: '❌Missing required fields.' });
   try {
     const exists = await usersCollection.findOne({ username });
-    if (exists) return res.status(409).send('User already exists');
+    if (exists) return res.status(409).send('❌User already exists');
 
     const hashedPassword = bcrypt.hashSync(password, 10);
     await usersCollection.insertOne({ username, email, password: hashedPassword, firstName, middleName, lastName, jobTitle, mobile });
@@ -149,7 +149,7 @@ app.post('/api/register', async (req, res) => {
 
   } catch (err) {
     console.error('❌ Registration failed:', err.message);
-    res.status(500).send('Server error during registration.');
+    res.status(500).send('❌Server error during registration.');
   }
 });
 
