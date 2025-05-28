@@ -36,7 +36,7 @@ MongoClient.connect(CONNECTION_STRING, { useNewUrlParser: true, useUnifiedTopolo
   });
 
 app.get('/api/register', (req, res) => {
-  res.send(\`
+  res.send(`
     <form method="POST" action="/api/register">
       <label>Username*: <input type="text" name="username" required></label><br>
       <label>Email Address*: <input type="email" name="email" required></label><br>
@@ -48,7 +48,7 @@ app.get('/api/register', (req, res) => {
       <label>Mobile Phone: <input type="text" name="mobile"></label><br>
       <input type="submit" value="Register">
     </form>
-  \`);
+  `);
 });
 
 app.post('/api/register', async (req, res) => {
