@@ -309,3 +309,79 @@ app.post('/api/register', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`✅ Backend running on port ${PORT}`);
 });
+
+
+/**
+ * @swagger
+ * /api/generate-test-cases:
+ *   post:
+ *     summary: Generate AI-based test scenarios from a given JSON schema
+ *     tags:
+ *       - AI Testing
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               schema:
+ *                 type: object
+ *             example:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   amount:
+ *                     type: number
+ *                   currency:
+ *                     type: string
+ *                 required: [amount, currency]
+ *     responses:
+ *       200:
+ *         description: A list of generated test cases
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   input:
+ *                     type: object
+ *                   expected:
+ *                     type: object
+ */
+
+app.post('/api/generate-test-cases', (req, res) => {
+  const { schema } = req.body;
+
+  if (!schema || typeof schema !== 'object') {
+    return res.status(400).json({ message: 'Invalid or missing schema object' });
+  }
+
+  // Simulate AI + rule logic
+  const testCases = [
+    {
+      input: { amount: 100, currency: 'USD' },
+      expected: { status: 'success' }
+    },
+    {
+      input: { amount: 0, currency: 'USD' },
+      expected: { status: 'fail', reason: 'Amount must be greater than 0' }
+    },
+    {
+      input: { amount: -50, currency: 'USD' },
+      expected: { status: 'fail', reason: 'Negative amount not allowed' }
+    },
+    {
+      input: { amount: 100 },
+      expected: { status: 'fail', reason: 'Missing required field: currency' }
+    },
+    {
+      input: { amount: 9999999, currency: 'XYZ' },
+      expected: { status: 'warning', reason: 'Unsupported currency code' }
+    }
+  ];
+
+  res.status(200).json(testCases);
+});
