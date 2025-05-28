@@ -4,8 +4,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const swaggerUi = require('swagger-ui-express');
-const swaggerJsdoc = require('swagger-jsdoc');
+//const swaggerUi = require('swagger-ui-express');
+//const swaggerJsdoc = require('swagger-jsdoc');
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
@@ -15,23 +15,6 @@ const SECRET_KEY = process.env.JWT_SECRET || 'sandbox-secret-key';
 const CONNECTION_STRING = process.env.CONNECTION_STRING;
 const DB_NAME = process.env.MONGO_DB_NAME || 'sandboxDB';
 const COLLECTION_NAME = process.env.MONGO_COLLECTION_NAME || 'users';
-
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'Sandbox Backend API',
-      version: '1.0.0',
-      description: 'API documentation for the Financial Testing Sandbox using JWT and Cosmos DB',
-    },
-    servers: [
-      {
-        url: `https://sandbox-backend-bernalo.azurewebsites.net`,
-      },
-    ],
-  },
-  apis: ['./index.js'], // Adjust path if routes are in another file
-};
 
 // const swaggerDocs = swaggerJsdoc(swaggerOptions);
 //app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
