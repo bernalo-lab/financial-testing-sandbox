@@ -61,7 +61,7 @@ app.post('/api/register', async (req, res) => {
 
     const hashedPassword = bcrypt.hashSync(password, 10);
     await usersCollection.insertOne({ username, email, password: hashedPassword, firstName, middleName, lastName, jobTitle, mobile });
-    res.send(`This is a protected route. Access granted for user: ${req.user.username}`);
+    res.status(201).send('✅Registration successful!');
 
   } catch (err) {
     console.error('❌ Registration failed:', err.message);
