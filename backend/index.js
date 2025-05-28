@@ -48,6 +48,11 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/users', authenticateToken, async (req, res) => {
+  const users = await usersCollection.find({}, { projection: { password: 0 } }).toArray();
+  res.json(users);
+});
+
 app.get('/api/login', (req, res) => {
   res.send(`
     <form method="POST" action="/api/login">
