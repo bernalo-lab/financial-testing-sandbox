@@ -35,6 +35,19 @@ MongoClient.connect(CONNECTION_STRING, { useNewUrlParser: true, useUnifiedTopolo
     process.exit(1);
   });
 
+
+app.get('/', (req, res) => {
+  res.send('Welcome to the JWT-Secured Financial Testing Sandbox API with Cosmos DB');
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'Backend is healthy', timestamp: new Date().toISOString() });
+});
+
 app.get('/api/login', (req, res) => {
   res.send(`
     <form method="POST" action="/api/login">
@@ -44,7 +57,6 @@ app.get('/api/login', (req, res) => {
     </form>
   `);
 });
-
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
