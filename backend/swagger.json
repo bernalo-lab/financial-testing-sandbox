@@ -51,37 +51,84 @@
         "tags": [
           "Users"
         ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "A list of users"
+          },
+          "401": {
+            "description": "Unauthorized"
           }
         }
       }
     },
-    "/api/echo": {
-      "post": {
-        "summary": "Echo back posted JSON",
+    "/api/login": {
+      "get": {
+        "summary": "Render login form",
         "tags": [
-          "Utilities"
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Login form HTML"
+          }
+        }
+      },
+      "post": {
+        "summary": "Authenticate a user",
+        "tags": [
+          "Auth"
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "johndoe"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "secure123"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Echoed response"
+            "description": "Login successful"
+          },
+          "401": {
+            "description": "Invalid credentials"
           }
         }
       }
     },
-    "/auth/register": {
+    "/api/register": {
+      "get": {
+        "summary": "Render registration form",
+        "tags": [
+          "Auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration form HTML"
+          }
+        }
+      },
       "post": {
         "summary": "Register a new user",
         "tags": [
@@ -94,13 +141,38 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "username": {
+                    "type": "string"
+                  },
                   "email": {
-                    "type": "string",
-                    "example": "user@example.com"
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "middleName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "jobTitle": {
+                    "type": "string"
+                  },
+                  "mobile": {
+                    "type": "string"
                   }
                 },
                 "required": [
-                  "email"
+                  "username",
+                  "email",
+                  "password",
+                  "firstName",
+                  "lastName",
+                  "jobTitle"
                 ]
               }
             }
@@ -111,9 +183,21 @@
             "description": "User registered successfully"
           },
           "400": {
-            "description": "Missing email"
+            "description": "Missing required fields"
+          },
+          "409": {
+            "description": "User already exists"
           }
         }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   }
